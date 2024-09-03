@@ -1,0 +1,56 @@
+<!-- myapp/templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Status</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <button id="start-task-button">Start Task</button>
+    <div id="loading" style="display:none;">Loading...</div>
+    <div id="result"></div>
+
+    <script>
+        function pollTaskStatus(taskId) {
+            $.ajax({
+                url: `/task-status/${taskId}/`,
+                method: 'GET',
+                success: function(response) {
+                    if (response.status === 'SUCCESS') {
+                        $('#loading').hide();
+                        $('#result').html('Task completed! Sequence: ' + response.result.join(', '));
+                    } else if (response.status === 'PENDING' || response.status === 'STARTED') {
+                        setTimeout(function() {
+                            pollTaskStatus(taskId);
+                        }, 2000);  // Poll every 2 seconds
+                    } else {
+                        $('#loading').hide();
+                        $('#result').html('Task failed or was revoked.');
+                    }
+                },
+                error: function(error) {
+                    $('#loading').hide();
+                    alert('An error occurred.');
+                }
+            });
+        }
+
+        $('#start-task-button').click(function() {
+            $.ajax({
+                url: '/start-task/',
+                method: 'GET',
+                success: function(response) {
+                    $('#loading').show();
+                    $('#result').empty();
+                    pollTaskStatus(response.task_id);
+                },
+                error: function(error) {
+                    alert('An error occurred while starting the task.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
