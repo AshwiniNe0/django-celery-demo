@@ -2,14 +2,26 @@ from django.shortcuts import render
 
 # Create your views here.
 from django.http import JsonResponse
-from .tasks import print_sequence
+from .tasks import print_sequence1, print_sequence2, print_sequence3
 
 from celery.result import AsyncResult
 from django.http import JsonResponse
 
 def start_task(request):
-    task = print_sequence.delay()
-    return JsonResponse({'task_id': task.id})
+    task_ids = []
+    
+    # Existing task
+    task_1 = print_sequence1.delay()
+    task_ids.append(task_1.id)
+    
+    # New tasks
+    task_2 = print_sequence2.delay()
+    task_ids.append(task_2.id)
+    task_3 = print_sequence3.delay()
+    task_ids.append(task_3.id)
+
+    return JsonResponse({'task_ids': task_ids})
+
 
 #Check status of task
 def task_status(request, task_id):

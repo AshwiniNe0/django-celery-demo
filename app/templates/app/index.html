@@ -1,4 +1,3 @@
-<!-- myapp/templates/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,44 +12,51 @@
     <div id="result"></div>
 
     <script>
-        function pollTaskStatus(taskId) {
-            $.ajax({
-                url: `/task-status/${taskId}/`,
+        document.addEventListener('DOMContentLoaded', function() {
+            // Call the Django view when the page loads (e.g., to start tasks if needed)
+            fetch("{% url 'start_task' %}", {
                 method: 'GET',
-                success: function(response) {
-                    if (response.status === 'SUCCESS') {
-                        $('#loading').hide();
-                        $('#result').html('Task completed! Sequence: ' + response.result.join(', '));
-                    } else if (response.status === 'PENDING' || response.status === 'STARTED') {
-                        setTimeout(function() {
-                            pollTaskStatus(taskId);
-                        }, 2000);  // Poll every 2 seconds
-                    } else {
-                        $('#loading').hide();
-                        $('#result').html('Task failed or was revoked.');
-                    }
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}',
                 },
-                error: function(error) {
-                    $('#loading').hide();
-                    alert('An error occurred.');
-                }
-            });
-        }
-
-        $('#start-task-button').click(function() {
-            $.ajax({
-                url: '/start-task/',
-                method: 'GET',
-                success: function(response) {
-                    $('#loading').show();
-                    $('#result').empty();
-                    pollTaskStatus(response.task_id);
-                },
-                error: function(error) {
-                    alert('An error occurred while starting the task.');
-                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Start polling task status after initiating the tasks
+                document.getElementById('loading').style.display = 'block';
+                pollTaskStatus(data.task_ids);
+            })
+            .catch(error => {
+                alert('An error occurred while starting the task.');
             });
         });
+
+        function pollTaskStatus(taskIds) {
+            taskIds.forEach(taskId => {
+                const poll = () => {
+                    fetch(`/task-status/${taskId}/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'SUCCESS') {
+                                document.getElementById('loading').style.display = 'none';
+                                document.getElementById('result').innerHTML += `<p>Task ${taskId} completed! Sequence: ${data.result.join(', ')}</p>`;
+                            } else if (data.status === 'PENDING' || data.status === 'STARTED') {
+                                setTimeout(poll, 2000); // Poll every 2 seconds
+                            } else {
+                                document.getElementById('loading').style.display = 'none';
+                                document.getElementById('result').innerHTML += `<p>Task ${taskId} failed or was revoked.</p>`;
+                            }
+                        })
+                        .catch(error => {
+                            document.getElementById('loading').style.display = 'none';
+                            alert('An error occurred while polling the task status.');
+                        });
+                };
+
+                poll();
+            });
+        }
     </script>
 </body>
 </html>
