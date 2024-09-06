@@ -1,6 +1,5 @@
 from __future__ import absolute_import, unicode_literals
 
-# app/tasks.py
 from celery import shared_task
 import time
 
@@ -30,6 +29,3 @@ def print_sequence3():
         print(i)
         time.sleep(1)  # Simulate a long-running task
     return sequence
-
-
-
