@@ -13,22 +13,25 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Call the Django view when the page loads (e.g., to start tasks if needed)
-            fetch("{% url 'start_task' %}", {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}',
-                },
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Start polling task status after initiating the tasks
-                document.getElementById('loading').style.display = 'block';
-                pollTaskStatus(data.task_ids);
-            })
-            .catch(error => {
-                alert('An error occurred while starting the task.');
+            // Attach event listener to button click
+            document.getElementById('start-task-button').addEventListener('click', function() {
+                // Call the Django view when the button is clicked to start the task
+                fetch("{% url 'start_task' %}", {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Start polling task status after initiating the tasks
+                    document.getElementById('loading').style.display = 'block';
+                    pollTaskStatus(data.task_ids);
+                })
+                .catch(error => {
+                    alert('An error occurred while starting the task.');
+                });
             });
         });
 
